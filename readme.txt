@@ -1,5 +1,5 @@
 === WP Author Slug ===
-Contributors: Konstantin Obenland
+Contributors: kobenland
 Tags: security, slug, author, author archive, url, permalink
 Requires at least: 2.5
 Tested up to: 3.1-RC5
