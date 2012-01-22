@@ -1,10 +1,10 @@
 <?php
 /** wp-author-slug.php
- * 
+ *
  * Plugin Name:	WP Author Slug
- * Plugin URI:	http://www.obenlands.de/en/portfolio/wp-author-slug/?utm_source=wordpress&utm_medium=plugin&utm_campaign=wp-author-slug
+ * Plugin URI:	http://www.obenlands.de/en/2011/02/wp-author-slug/?utm_source=wordpress&utm_medium=plugin&utm_campaign=wp-author-slug
  * Description:	Rewrites the author url to NOT display the username but the display name
- * Version:		1.1
+ * Version:		1.2
  * Author:		Konstantin Obenland
  * Author URI:	http://www.obenlands.de/en/?utm_source=wordpress&utm_medium=plugin&utm_campaign=wp-author-slug
  * Text Domain: wp-author-slug
@@ -33,11 +33,11 @@ class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins {
 	
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @author	Konstantin Obenland
 	 * @since	1.1 - 03.04.2011
 	 * @access	public
-	 * 
+	 *
 	 * @return	Obenland_Wp_Author_Slug
 	 */
 	public function __construct() {
@@ -57,22 +57,22 @@ class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins {
 	
 	/**
 	 * Overwrites the users' nicenames with the users' display name
-	 * 
+	 *
 	 * Only runs on activation of plugin
-	 * 
+	 *
 	 * @author	Konstantin Obenland
 	 * @since	1.0 - 19.02.2011
 	 * @access	public
 	 * @static
 	 * @global	$wpdb
-	 * 
+	 *
 	 * @return	void
 	 */
 	public static function activation() {
 		global $wpdb;
 		
 		$users = $wpdb->get_results( "
-			SELECT ID, display_name 
+			SELECT ID, display_name
 			FROM $wpdb->users
 		" );
 		
@@ -81,7 +81,7 @@ class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins {
 			
 			if( ! empty($user->display_name) ) {
 				$wpdb->update(
-					$wpdb->users, 
+					$wpdb->users,
 					array( 'user_nicename'	=>	sanitize_title($user->display_name) ),
 					array( 'ID'				=>	$user->ID )
 				);
@@ -92,14 +92,14 @@ class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins {
 	
 	/**
 	 * Overwrites the user's nicename with the user's display name
-	 * 
+	 *
 	 * Runs every time a user is created or updated
-	 * 
+	 *
 	 * @author	Konstantin Obenland
 	 * @since	1.0 - 19.02.2011
-	 * 
+	 *
 	 * @param	string	$name	The default nicename
-	 * 
+	 *
 	 * @return	string	The sanitized nicename
 	 */
 	public function pre_user_nicename( $name ) {
