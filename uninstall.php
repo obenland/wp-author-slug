@@ -1,22 +1,19 @@
 <?php
 //Don't uninstall unless you absolutely want to!
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' )){
-	wp_die('WP_UNINSTALL_PLUGIN undefined.');
+if ( ! defined( 'WP_UNINSTALL_PLUGIN'  ) ) {
+	wp_die( 'WP_UNINSTALL_PLUGIN undefined.' );
 }
 
-global $wpdb;
-		
-$users = $wpdb->get_results( "
-	SELECT ID, user_login 
-	FROM $wpdb->users
-" );
+$users	=	get_users( array(
+	'blog_id'	=>	'',
+	'fields'	=>	array( 'ID', 'user_login')
+) );
 
 foreach ( $users as $user ) {
-	$wpdb->update(
-		$wpdb->users,
-		array( 'user_nicename'	=>	sanitize_title($user->user_login) ),
-		array( 'ID'				=>	$user->ID )
-	);
+	@wp_update_user( array(
+		'ID'			=>	$user->ID,
+		'user_nicename'	=>	sanitize_title( $user->user_login )
+	) );
 }
 
 

@@ -2,18 +2,18 @@
 /** wp-author-slug.php
  *
  * Plugin Name:	WP Author Slug
- * Plugin URI:	http://www.obenlands.de/en/2011/02/wp-author-slug/?utm_source=wordpress&utm_medium=plugin&utm_campaign=wp-author-slug
+ * Plugin URI:	http://en.wp.obenland.it/wp-author-slug/?utm_source=wordpress&utm_medium=plugin&utm_campaign=wp-author-slug
  * Description:	Rewrites the author url to NOT display the username but the display name
- * Version:		1.2
+ * Version:		1.2.1
  * Author:		Konstantin Obenland
- * Author URI:	http://www.obenlands.de/en/?utm_source=wordpress&utm_medium=plugin&utm_campaign=wp-author-slug
+ * Author URI:	http://en.wp.obenland.it/?utm_source=wordpress&utm_medium=plugin&utm_campaign=wp-author-slug
  * Text Domain: wp-author-slug
  * Domain Path: /lang
  * License:		GPLv2
  */
 
 
-if( ! class_exists('Obenland_Wp_Plugins') ) {
+if ( ! class_exists('Obenland_Wp_Plugins_v15') ) {
 	require_once('obenland-wp-plugins.php');
 }
 
@@ -24,7 +24,7 @@ register_activation_hook( __FILE__, array(
 ));
 
 
-class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins {
+class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins_v15 {
 	
 	
 	///////////////////////////////////////////////////////////////////////////
@@ -44,14 +44,11 @@ class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins {
 		
 		parent::__construct( array(
 			'textdomain'		=>	'wp-author-slug',
-			'plugin_name'		=>	plugin_basename(__FILE__),
+			'plugin_path'		=>	__FILE__,
 			'donate_link_id'	=>	'XVPLJZ3VH4GCN'
 		));
 		
-		add_filter( 'pre_user_nicename', array(
-			&$this,
-			'pre_user_nicename'
-		));
+		$this->hook( 'pre_user_nicename' );
 	}
 	
 	
@@ -64,27 +61,21 @@ class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins {
 	 * @since	1.0 - 19.02.2011
 	 * @access	public
 	 * @static
-	 * @global	$wpdb
 	 *
 	 * @return	void
 	 */
 	public static function activation() {
-		global $wpdb;
+		$users	=	get_users(array(
+			'blog_id'	=>	'',
+			'fields'	=>	array( 'ID', 'display_name')
+		));
 		
-		$users = $wpdb->get_results( "
-			SELECT ID, display_name
-			FROM $wpdb->users
-		" );
-		
-	
 		foreach ( $users as $user ) {
-			
-			if( ! empty($user->display_name) ) {
-				$wpdb->update(
-					$wpdb->users,
-					array( 'user_nicename'	=>	sanitize_title($user->display_name) ),
-					array( 'ID'				=>	$user->ID )
-				);
+			if ( $user->display_name ) {
+				@wp_update_user( array(
+					'ID'			=>	$user->ID,
+					'user_nicename'	=>	sanitize_title( $user->display_name )
+				) );
 			}
 		}
 	}
@@ -104,10 +95,9 @@ class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins {
 	 */
 	public function pre_user_nicename( $name ) {
 		
-		if( ! empty($_REQUEST['display_name']) ) {
+		if ( $_REQUEST['display_name'] ) {
 			return sanitize_title( $_REQUEST['display_name'] );
 		}
-		
 		return $name;
 	}
 }  // End of class Obenland_Wp_Author_Slug

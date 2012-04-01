@@ -3,8 +3,8 @@ Contributors: kobenland
 Tags: security, slug, author, author archive, url, permalink
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=XVPLJZ3VH4GCN
 Requires at least: 3.0
-Tested up to: 3.1.1
-Stable tag: 1.2
+Tested up to: 3.4-alpha
+Stable tag: 1.2.1
 
 Add a layer of security and prevent your login name from being shown in the author archive's URL.
 
@@ -29,6 +29,10 @@ None asked yet.
 
 
 == Changelog ==
+
+= 1.2.1 =
+* Updated uninstall.php and activation hook to use WordPress User API instead of custom queries
+* Updated utility class
 
 = 1.2 =
 * Tested for WordPress 3.3.1
