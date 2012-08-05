@@ -1,10 +1,10 @@
 === WP Author Slug ===
-Contributors: kobenland
+Contributors: obenland
 Tags: security, slug, author, author archive, url, permalink
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=XVPLJZ3VH4GCN
 Requires at least: 3.0
-Tested up to: 3.4-alpha
-Stable tag: 1.2.1
+Tested up to: 3.4.1
+Stable tag: 1.2.2
 
 Add a layer of security and prevent your login name from being shown in the author archive's URL.
 
@@ -23,12 +23,11 @@ towards your friendly URLs with using your display name.
 3. Activate the plugin through the 'Plugins' menu in WordPress
 
 
-== Frequently Asked Questions ==
-
-None asked yet.
-
-
 == Changelog ==
+
+= 1.2.2 =
+* Updated utility class
+* Tested with WordPress 3.4.1
 
 = 1.2.1 =
 * Updated uninstall.php and activation hook to use WordPress User API instead of custom queries

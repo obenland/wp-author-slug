@@ -4,7 +4,7 @@
  * Plugin Name:	WP Author Slug
  * Plugin URI:	http://en.wp.obenland.it/wp-author-slug/?utm_source=wordpress&utm_medium=plugin&utm_campaign=wp-author-slug
  * Description:	Rewrites the author url to NOT display the username but the display name
- * Version:		1.2.1
+ * Version:		1.2.2
  * Author:		Konstantin Obenland
  * Author URI:	http://en.wp.obenland.it/?utm_source=wordpress&utm_medium=plugin&utm_campaign=wp-author-slug
  * Text Domain: wp-author-slug
@@ -13,18 +13,18 @@
  */
 
 
-if ( ! class_exists('Obenland_Wp_Plugins_v15') ) {
-	require_once('obenland-wp-plugins.php');
+if ( ! class_exists( 'Obenland_Wp_Plugins_v300' ) ) {
+	require_once( 'obenland-wp-plugins.php' );
 }
 
 
 register_activation_hook( __FILE__, array(
 	'Obenland_Wp_Author_Slug',
 	'activation'
-));
+) );
 
 
-class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins_v15 {
+class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins_v300 {
 	
 	
 	///////////////////////////////////////////////////////////////////////////
@@ -67,7 +67,7 @@ class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins_v15 {
 	public static function activation() {
 		$users	=	get_users(array(
 			'blog_id'	=>	'',
-			'fields'	=>	array( 'ID', 'display_name')
+			'fields'	=>	array( 'ID', 'display_name' )
 		));
 		
 		foreach ( $users as $user ) {

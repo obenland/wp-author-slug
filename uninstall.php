@@ -6,7 +6,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN'  ) ) {
 
 $users	=	get_users( array(
 	'blog_id'	=>	'',
-	'fields'	=>	array( 'ID', 'user_login')
+	'fields'	=>	array( 'ID', 'user_login' )
 ) );
 
 foreach ( $users as $user ) {
