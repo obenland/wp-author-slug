@@ -32,7 +32,7 @@ class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins_V5 {
 		parent::__construct(
 			array(
 				'textdomain'     => 'wp-author-slug',
-				'plugin_path'    => __FILE__,
+				'plugin_path'    => __DIR__ . '/wp-author-slug.php',
 				'donate_link_id' => 'XVPLJZ3VH4GCN',
 			)
 		);
