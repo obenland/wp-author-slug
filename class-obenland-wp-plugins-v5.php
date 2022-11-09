@@ -134,7 +134,7 @@ class Obenland_Wp_Plugins_V5 {
 	}
 
 	/**
-	 * Displays a box with a donate button and call to action links.
+	 * Displays a box with a donate button and call-to-action links.
 	 *
 	 * Props Joost de Valk, as this is almost entirely from his awesome WordPress
 	 * SEO Plugin.
@@ -165,12 +165,12 @@ class Obenland_Wp_Plugins_V5 {
 				<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
 					<input type="hidden" name="cmd" value="_s-xclick">
 					<input type="hidden" name="hosted_button_id" value="G65Y5CM3HVRNY">
-					<input type="image" src="https://www.paypalobjects.com/<?php echo esc_attr( get_locale() ); ?>/i/btn/btn_donate_LG.gif" border="0" name="submit">
+					<input type="image" alt="" src="https://www.paypalobjects.com/<?php echo esc_attr( get_locale() ); ?>/i/btn/btn_donate_LG.gif" border="0" name="submit">
 					<img alt="" border="0" src="https://www.paypalobjects.com/de_DE/i/scr/pixel.gif" width="1" height="1">
 				</form>
 				<p><?php esc_html_e( 'Or you could:', 'obenland-wp' ); ?></p>
 				<ul>
-					<li><a href="http://wordpress.org/plugins/wp-approve-user/"><?php esc_html_e( 'Rate the plugin 5&#9733; on WordPress.org', 'obenland-wp' ); ?></a></li>
+					<li><a href="https://wordpress.org/plugins/wp-approve-user/"><?php esc_html_e( 'Rate the plugin 5&#9733; on WordPress.org', 'obenland-wp' ); ?></a></li>
 					<li><a href="<?php echo esc_url( $plugin_data['PluginURI'] ); ?>"><?php esc_html_e( 'Blog about it &amp; link to the plugin page', 'obenland-wp' ); ?></a></li>
 				</ul>
 			</div>
@@ -217,17 +217,17 @@ class Obenland_Wp_Plugins_V5 {
 				<ul>
 					<?php if ( ! $rss_items ) : ?>
 						<li><?php esc_html_e( 'No news items, feed might be broken...', 'obenland-wp' ); ?></li>
-					<?php
+						<?php
 					else :
 						foreach ( $rss_items as $item ) :
 							$url = preg_replace( '/#.*/', '#utm_source=WordPress&utm_medium=sidebannerpostbox&utm_term=rssitem&utm_campaign=' . $this->textdomain, $item->get_permalink() );
 							?>
 							<li><a class="rsswidget" href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $item->get_title() ); ?></a></li>
-						<?php
+							<?php
 						endforeach;
 					endif;
 					?>
-					<li class="twitter"><a href="http://twitter.com/obenland"><?php esc_html_e( 'Follow Konstantin on Twitter', 'obenland-wp' ); ?></a></li>
+					<li class="twitter"><a href="https://twitter.com/obenland"><?php esc_html_e( 'Follow Konstantin on Twitter', 'obenland-wp' ); ?></a></li>
 					<li class="rss"><a href="<?php echo esc_url( $feed_url ); ?>"><?php esc_html_e( 'Subscribe via RSS', 'obenland-wp' ); ?></a></li>
 				</ul>
 			</div>
@@ -258,7 +258,7 @@ class Obenland_Wp_Plugins_V5 {
 		$args     = func_get_args();
 		unset( $args[0] ); // Filter name.
 
-		foreach ( (array) $args as $arg ) {
+		foreach ( $args as $arg ) {
 			if ( is_int( $arg ) ) {
 				$priority = $arg;
 			} else {
