@@ -3,7 +3,7 @@ Contributors: obenland
 Tags: security, slug, author, author archive, url, permalink
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=XVPLJZ3VH4GCN
 Requires at least: 3.0
-Tested up to: 5.6
+Tested up to: 6.1
 Stable tag: 3
 
 Add a layer of security and prevent your login name from being shown in the author archive's URL.
