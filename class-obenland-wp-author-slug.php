@@ -8,7 +8,7 @@
 /**
  * Class Obenland_Wp_Author_Slug.
  */
-class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins_V4 {
+class Obenland_Wp_Author_Slug extends Obenland_Wp_Plugins_V5 {
 
 	/**
 	 * Class instance.
