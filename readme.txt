@@ -60,4 +60,4 @@ towards your friendly URLs with using your display name.
 
 
 == Upgrade Notice ==
-Maintenance update
+Maintenance update.
