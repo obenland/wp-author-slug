@@ -10,16 +10,20 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	wp_die( 'WP_UNINSTALL_PLUGIN undefined.' );
 }
 
-$users = get_users( array(
-	'blog_id' => '',
-	'fields'  => array( 'ID', 'user_login' ),
-) );
+$users = get_users(
+	array(
+		'blog_id' => '',
+		'fields'  => array( 'ID', 'user_login' ),
+	)
+);
 
 foreach ( $users as $user ) {
-	@wp_update_user( array(
-		'ID'            => $user->ID,
-		'user_nicename' => sanitize_title( $user->user_login ),
-	) );
+	wp_update_user(
+		array(
+			'ID'            => $user->ID,
+			'user_nicename' => sanitize_title( $user->user_login ),
+		)
+	);
 }
 
 
