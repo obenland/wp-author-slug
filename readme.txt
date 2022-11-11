@@ -15,7 +15,7 @@ This plugin replaces the author slug with a sanitized version of the user's disp
 This plugin will not prevent hackers from finding out your login name but the login name won't be visible
 in the author archive's URL, which works towards your friendly URLs with using your display name.
 
-DO NOT use this on a site with more than 100 registered users, as updating all of their nicenames at once might break your site.
+DO NOT use this on a site with more than 1000 registered users, as updating all of their nicenames at once might break your site.
 
 
 == Installation ==
