@@ -4,7 +4,7 @@ Tags: security, slug, author, author archive, url, permalink
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=XVPLJZ3VH4GCN
 Requires at least: 3.0
 Tested up to: 6.1
-Stable tag: 3
+Stable tag: 4
 
 Add a layer of security and prevent your login name from being shown in the author archive's URL.
 
@@ -12,8 +12,10 @@ Add a layer of security and prevent your login name from being shown in the auth
 
 This plugin replaces the author slug with a sanitized version of the user's display name.
 
-It will prevent hackers from finding out your login name through the author archive's URL and works
-towards your friendly URLs with using your display name.
+This plugin will not prevent hackers from finding out your login name but the login name won't be visible
+in the author archive's URL, which works towards your friendly URLs with using your display name.
+
+DO NOT use this on a site with more than 1000 registered users, as updating all of their nicenames at once might break your site.
 
 
 == Installation ==
@@ -24,6 +26,11 @@ towards your friendly URLs with using your display name.
 
 
 == Changelog ==
+
+= 4 =
+* Moved clean up to plugin deactivation. This makes sure author slugs are only modified with the plugin active.
+* Updated utility class.
+* Tested with WordPress 6.1.
 
 = 3 =
 * Maintenance release.
