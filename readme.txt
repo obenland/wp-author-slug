@@ -3,8 +3,8 @@ Contributors: obenland
 Tags: security, slug, author, author archive, url, permalink
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=XVPLJZ3VH4GCN
 Requires at least: 3.0
-Tested up to: 6.4
-Stable tag: 4
+Tested up to: 6.8
+Stable tag: 5
 
 Add a layer of security and prevent your login name from being shown in the author archive's URL.
 
@@ -26,6 +26,10 @@ DO NOT use this on a site with more than 1000 registered users, as updating all 
 
 
 == Changelog ==
+
+= 5 =
+* Added conflict detection for author slugs that match existing page slugs. Props @knutsp.
+* Tested with WordPress 6.8.
 
 = 4 =
 * Moved clean up to plugin deactivation. This makes sure author slugs are only modified with the plugin active.
@@ -67,4 +71,4 @@ DO NOT use this on a site with more than 1000 registered users, as updating all 
 
 
 == Upgrade Notice ==
-Maintenance update.
+Added conflict detection to prevent sub-page loading issues when author slugs match page slugs.
