@@ -1,0 +1,80 @@
+name: PHPUnit
+
+on:
+    push:
+        branches: [trunk]
+        paths:
+            - '**/*.php'
+            - 'composer.json'
+            - 'composer.lock'
+            - 'phpunit.xml'
+            - '.wp-env.json'
+            - 'package.json'
+            - 'package-lock.json'
+            - '.nvmrc'
+            - '.github/workflows/phpunit.yml'
+    pull_request:
+        branches: [trunk]
+        paths:
+            - '**/*.php'
+            - 'composer.json'
+            - 'composer.lock'
+            - 'phpunit.xml'
+            - '.wp-env.json'
+            - 'package.json'
+            - 'package-lock.json'
+            - '.nvmrc'
+            - '.github/workflows/phpunit.yml'
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+
+jobs:
+    php-test:
+        name: 'PHP ${{ matrix.php }} / WP ${{ matrix.wp }}'
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        strategy:
+            fail-fast: false
+            matrix:
+                php: ['7.4', '8.4']
+                wp: ['latest']
+        env:
+            WP_ENV_PHP_VERSION: ${{ matrix.php }}
+            WP_ENV_CORE: ${{ matrix.wp == 'latest' && 'https://wordpress.org/wordpress-latest.zip' || format('WordPress/WordPress#{0}', matrix.wp) }}
+
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup Node.js (.nvmrc)
+              uses: actions/setup-node@v6
+              with:
+                  node-version-file: '.nvmrc'
+                  cache: npm
+
+            - name: Cache Composer dependencies
+              uses: actions/cache@v5
+              id: composer-cache
+              with:
+                  path: vendor
+                  key: composer-php${{ matrix.php }}-${{ hashFiles('composer.json') }}
+
+            - name: Install PHP dependencies
+              if: steps.composer-cache.outputs.cache-hit != 'true'
+              run: composer update --prefer-dist --no-progress
+
+            - name: npm install
+              run: npm ci
+
+            - name: Install WordPress
+              run: npm run start
+
+            - name: Run PHP unit tests (single site)
+              run: npm run test-php
+
+            - name: Run PHP unit tests (multisite)
+              run: npm run test-php-multisite
