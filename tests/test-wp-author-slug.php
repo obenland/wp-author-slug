@@ -377,7 +377,8 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 
 	/**
 	 * Tests that `plugin_row_meta` appends a Donate link when the file matches
-	 * this plugin and that the rendered URL points at PayPal.
+	 * this plugin, the rendered URL points at PayPal, and the anchor carries
+	 * `rel="noopener noreferrer"` to mitigate reverse-tabnabbing.
 	 */
 	public function test_plugin_row_meta_appends_donate_link_for_this_plugin() {
 		$instance = Obenland_Wp_Author_Slug::get_instance();
@@ -387,6 +388,7 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 		$this->assertCount( 1, $meta );
 		$this->assertStringContainsString( '>Donate</a>', $meta[0] );
 		$this->assertStringContainsString( 'paypal.com/cgi-bin/webscr', $meta[0] );
+		$this->assertStringContainsString( 'rel="noopener noreferrer"', $meta[0] );
 	}
 
 	/**
