@@ -4,10 +4,12 @@
 	"private": true,
 	"description": "Rewrites the author URL to use the user's display name instead of their username.",
 	"devDependencies": {
-		"@wordpress/env": "^11.4.0"
+		"@wordpress/env": "^11.4.0",
+		"@wordpress/scripts": "^32.0.0"
 	},
 	"scripts": {
 		"wp-env": "wp-env",
+		"format": "wp-scripts format",
 		"start": "wp-env start",
 		"stop": "wp-env stop",
 		"destroy": "wp-env destroy",
