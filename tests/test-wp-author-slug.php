@@ -136,14 +136,14 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 	 * page.
 	 */
 	public function test_admin_notices_renders_conflict_for_admin() {
-		$admin_id    = self::factory()->user->create( array( 'role' => 'administrator' ) );
-		$user_id     = self::factory()->user->create(
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$user_id  = self::factory()->user->create(
 			array(
 				'display_name' => 'About Us',
 				'role'         => 'author',
 			)
 		);
-		$page_id     = self::factory()->post->create(
+		$page_id  = self::factory()->post->create(
 			array(
 				'post_type'   => 'page',
 				'post_status' => 'publish',
@@ -163,6 +163,11 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 		);
 
 		wp_set_current_user( $admin_id );
+
+		// On multisite the `edit_users` cap is restricted to super admins.
+		if ( is_multisite() ) {
+			grant_super_admin( $admin_id );
+		}
 
 		ob_start();
 		Obenland_Wp_Author_Slug::get_instance()->admin_notices();
@@ -278,7 +283,15 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 	 * Tests that `wp_author_slug_deactivation` clears any recorded conflicts.
 	 */
 	public function test_deactivation_clears_conflicts() {
-		update_option( 'wp_author_slug_conflicts', array( array( 'user_id' => 1, 'page_id' => 2 ) ) );
+		update_option(
+			'wp_author_slug_conflicts',
+			array(
+				array(
+					'user_id' => 1,
+					'page_id' => 2,
+				),
+			)
+		);
 
 		wp_author_slug_deactivation();
 
