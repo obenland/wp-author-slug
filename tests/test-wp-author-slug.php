@@ -262,7 +262,7 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 	public function test_deactivation_restores_nicename_to_login() {
 		$user_id = self::factory()->user->create(
 			array(
-				'user_login'   => 'jane_doe',
+				'user_login'   => 'janedoe',
 				'display_name' => 'Jane Doe',
 			)
 		);
@@ -272,11 +272,13 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 		$user_after_activate = get_userdata( $user_id );
 		$this->assertSame( 'jane-doe', $user_after_activate->user_nicename );
 
-		// Then deactivate; nicename should fall back to the sanitized login.
+		// Then deactivate; nicename should fall back to the sanitized login,
+		// which differs from the display-name slug so a no-op deactivation
+		// would not pass this assertion.
 		wp_author_slug_deactivation();
 
 		$user_after_deactivate = get_userdata( $user_id );
-		$this->assertSame( sanitize_title( 'jane_doe' ), $user_after_deactivate->user_nicename );
+		$this->assertSame( 'janedoe', $user_after_deactivate->user_nicename );
 	}
 
 	/**
