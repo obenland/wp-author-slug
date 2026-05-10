@@ -362,8 +362,8 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 
 	/**
 	 * Tests that `admin_notices` skips conflict entries whose user or page no
-	 * longer exists, rather than emitting a malformed list item or fataling on
-	 * a null user/page.
+	 * longer exists, rather than emitting a malformed list item or triggering
+	 * a fatal error on a null user/page.
 	 */
 	public function test_admin_notices_skips_stale_conflict_entries() {
 		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
