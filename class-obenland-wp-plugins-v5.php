@@ -125,8 +125,8 @@ class Obenland_Wp_Plugins_V5 {
 		if ( $this->plugin_name === $plugin_file ) {
 			$plugin_meta[] = sprintf(
 				'<a href="%1$s" target="_blank" title="%2$s">%2$s</a>',
-				$this->donate_link,
-				__( 'Donate', 'obenland-wp' )
+				esc_url( $this->donate_link ),
+				esc_attr__( 'Donate', 'obenland-wp' )
 			);
 		}
 
