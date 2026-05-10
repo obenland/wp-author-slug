@@ -174,7 +174,10 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'notice-error', $output );
-		$this->assertStringContainsString( 'WP Author Slug: Conflicts Detected', $output );
+		$this->assertStringContainsString(
+			esc_html__( 'WP Author Slug: Conflicts Detected', 'wp-author-slug' ),
+			$output
+		);
 		$this->assertStringContainsString( 'About Us', $output );
 		$this->assertStringContainsString( '<code>about-us</code>', $output );
 		$this->assertStringContainsString( 'About Us Page', $output );
