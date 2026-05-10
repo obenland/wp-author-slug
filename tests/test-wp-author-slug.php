@@ -361,6 +361,106 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Reads the protected `plugin_name` from the singleton via reflection so
+	 * tests do not have to hard-code the basename WordPress uses to identify
+	 * this plugin file (which depends on the test harness's plugin layout).
+	 *
+	 * @return string The plugin basename WordPress uses for plugin_row_meta.
+	 */
+	private function get_plugin_name() {
+		$instance   = Obenland_Wp_Author_Slug::get_instance();
+		$reflection = new ReflectionObject( $instance );
+		$property   = $reflection->getProperty( 'plugin_name' );
+		$property->setAccessible( true );
+		return $property->getValue( $instance );
+	}
+
+	/**
+	 * Tests that `plugin_row_meta` appends a Donate link when the file matches
+	 * this plugin, the rendered URL points at PayPal, and the anchor carries
+	 * `rel="noopener noreferrer"` to mitigate reverse-tabnabbing.
+	 */
+	public function test_plugin_row_meta_appends_donate_link_for_this_plugin() {
+		$instance = Obenland_Wp_Author_Slug::get_instance();
+
+		$meta = $instance->plugin_row_meta( array(), $this->get_plugin_name() );
+
+		$this->assertCount( 1, $meta );
+		$this->assertStringContainsString( '>Donate</a>', $meta[0] );
+		$this->assertStringContainsString( 'paypal.com/cgi-bin/webscr', $meta[0] );
+		$this->assertStringContainsString( 'rel="noopener noreferrer"', $meta[0] );
+	}
+
+	/**
+	 * Tests that `plugin_row_meta` returns the existing meta unchanged when the
+	 * row belongs to a different plugin.
+	 */
+	public function test_plugin_row_meta_passes_through_for_other_plugins() {
+		$instance = Obenland_Wp_Author_Slug::get_instance();
+		$existing = array( 'Existing meta' );
+
+		$this->assertSame(
+			$existing,
+			$instance->plugin_row_meta( $existing, 'other-plugin/other-plugin.php' )
+		);
+	}
+
+	/**
+	 * Tests that `plugin_row_meta` escapes the donate URL through `esc_url()`
+	 * so a compromised `donate_link` cannot inject the `javascript:` protocol
+	 * or break out of the `href` attribute.
+	 */
+	public function test_plugin_row_meta_escapes_donate_url() {
+		$instance   = Obenland_Wp_Author_Slug::get_instance();
+		$reflection = new ReflectionObject( $instance );
+		$property   = $reflection->getProperty( 'donate_link' );
+		$property->setAccessible( true );
+		$original = $property->getValue( $instance );
+
+		try {
+			$property->setValue( $instance, 'javascript:alert(1)" onclick="alert(2)' );
+
+			$meta = $instance->plugin_row_meta( array(), $this->get_plugin_name() );
+
+			$this->assertNotEmpty( $meta );
+			/* esc_url() strips disallowed protocols entirely. */
+			$this->assertStringNotContainsString( 'javascript:', $meta[0] );
+			/* The injected attribute breakout must not survive escaping. */
+			$this->assertStringNotContainsString( 'onclick="alert(2)"', $meta[0] );
+		} finally {
+			$property->setValue( $instance, $original );
+		}
+	}
+
+	/**
+	 * Tests that `plugin_row_meta` escapes the translated `Donate` label so a
+	 * tampered translation cannot inject markup into the `title` attribute or
+	 * the link text.
+	 */
+	public function test_plugin_row_meta_escapes_donate_label() {
+		$malicious = '"><script>alert(1)</script>';
+		$filter    = static function ( $translation, $text, $domain ) use ( $malicious ) {
+			if ( 'obenland-wp' === $domain && 'Donate' === $text ) {
+				return $malicious;
+			}
+			return $translation;
+		};
+		add_filter( 'gettext', $filter, 10, 3 );
+
+		try {
+			$instance = Obenland_Wp_Author_Slug::get_instance();
+			$meta     = $instance->plugin_row_meta( array(), $this->get_plugin_name() );
+
+			$this->assertNotEmpty( $meta );
+			/* The raw payload must never survive into the rendered markup. */
+			$this->assertStringNotContainsString( $malicious, $meta[0] );
+			$this->assertStringNotContainsString( '<script>', $meta[0] );
+		} finally {
+			remove_filter( 'gettext', $filter, 10 );
+		}
+	}
+
+	/**
 	 * Tests that `admin_notices` skips conflict entries whose user or page no
 	 * longer exists, rather than emitting a malformed list item or triggering
 	 * a fatal error on a null user/page.
