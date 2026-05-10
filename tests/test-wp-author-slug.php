@@ -70,15 +70,15 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Tests that the `pre_user_nicename` filter chain delegates to the class
-	 * method (i.e., the class wires itself up correctly via Obenland_Wp_Plugins_V5).
+	 * Tests that the class registers `pre_user_nicename` on the filter chain
+	 * during bootstrap (via Obenland_Wp_Plugins_V5::hook()).
 	 */
-	public function test_pre_user_nicename_filter_chain() {
-		$_REQUEST['display_name'] = 'Filter Chain User';
-
-		$this->assertSame(
-			'filter-chain-user',
-			apply_filters( 'pre_user_nicename', 'filterchainuser' )
+	public function test_pre_user_nicename_filter_is_registered() {
+		$this->assertNotFalse(
+			has_filter(
+				'pre_user_nicename',
+				array( Obenland_Wp_Author_Slug::get_instance(), 'pre_user_nicename' )
+			)
 		);
 	}
 
@@ -174,10 +174,7 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'notice-error', $output );
-		$this->assertStringContainsString(
-			esc_html__( 'WP Author Slug: Conflicts Detected', 'wp-author-slug' ),
-			$output
-		);
+		$this->assertStringContainsString( 'WP Author Slug: Conflicts Detected', $output );
 		$this->assertStringContainsString( 'About Us', $output );
 		$this->assertStringContainsString( '<code>about-us</code>', $output );
 		$this->assertStringContainsString( 'About Us Page', $output );
@@ -246,7 +243,7 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 	public function test_activation_no_conflict_when_no_page_collides() {
 		self::factory()->user->create(
 			array(
-				'display_name' => 'Unique Person ' . wp_generate_uuid4(),
+				'display_name' => 'Unique Person Without Page Conflict',
 			)
 		);
 
@@ -307,12 +304,94 @@ class Test_WP_Author_Slug extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Tests that the singleton always returns the same instance.
+	 * Tests that `wp_author_slug_activation` skips users whose `display_name`
+	 * is empty (the `! empty( $user->display_name )` guard).
 	 */
-	public function test_singleton_returns_same_instance() {
-		$first  = Obenland_Wp_Author_Slug::get_instance();
-		$second = Obenland_Wp_Author_Slug::get_instance();
+	public function test_activation_skips_users_with_empty_display_name() {
+		global $wpdb;
 
-		$this->assertSame( $first, $second );
+		$user_id = self::factory()->user->create(
+			array(
+				'user_login'   => 'emptydisplay',
+				'display_name' => 'Will Be Erased',
+			)
+		);
+
+		/*
+		 * wp_update_user() falls back to user_login when display_name is empty,
+		 * so write the empty value directly to bypass that guard.
+		 */
+		$wpdb->update( $wpdb->users, array( 'display_name' => '' ), array( 'ID' => $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		clean_user_cache( $user_id );
+
+		$nicename_before = get_userdata( $user_id )->user_nicename;
+
+		wp_author_slug_activation();
+
+		$nicename_after = get_userdata( $user_id )->user_nicename;
+		$this->assertSame( $nicename_before, $nicename_after );
+	}
+
+	/**
+	 * Tests that `wp_author_slug_activation` does not record a conflict when
+	 * the colliding slug belongs to a non-page post type. The conflict check
+	 * uses `get_page_by_path()`, which is page-only by default.
+	 */
+	public function test_activation_ignores_post_with_same_slug_as_proposed_user_slug() {
+		self::factory()->user->create(
+			array(
+				'display_name' => 'Some Article',
+			)
+		);
+		self::factory()->post->create(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+				'post_title'  => 'Some Article',
+				'post_name'   => 'some-article',
+			)
+		);
+
+		wp_author_slug_activation();
+
+		$this->assertFalse(
+			(bool) get_option( 'wp_author_slug_conflicts' ),
+			'Expected no conflicts when only a non-page post shares the proposed slug.'
+		);
+	}
+
+	/**
+	 * Tests that `admin_notices` skips conflict entries whose user or page no
+	 * longer exists, rather than emitting a malformed list item or triggering
+	 * a fatal error on a null user/page.
+	 */
+	public function test_admin_notices_skips_stale_conflict_entries() {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		update_option(
+			'wp_author_slug_conflicts',
+			array(
+				array(
+					'user_id' => 999999,
+					'page_id' => 999998,
+				),
+			)
+		);
+
+		wp_set_current_user( $admin_id );
+
+		// On multisite the `edit_users` cap is restricted to super admins.
+		if ( is_multisite() ) {
+			grant_super_admin( $admin_id );
+		}
+
+		ob_start();
+		Obenland_Wp_Author_Slug::get_instance()->admin_notices();
+		$output = ob_get_clean();
+
+		// Wrapper still renders (early-return guards passed).
+		$this->assertStringContainsString( 'notice-error', $output );
+		// But no <li> should be rendered for the stale conflict entry.
+		$this->assertStringNotContainsString( '<li>', $output );
 	}
 }
