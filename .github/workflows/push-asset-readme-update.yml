@@ -3,6 +3,15 @@ on:
     push:
         branches:
             - trunk
+        # Only fire when the push actually touches files this workflow can ship.
+        # 10up/action-wordpress-plugin-asset-update refuses to deploy if any
+        # non-asset/readme file differs from SVN trunk, so a code-only push
+        # would always exit 1. If this workflow still fails after a readme/asset
+        # push, trunk has unshipped code from a prior commit — cut a release tag
+        # to publish via deploy.yml instead.
+        paths:
+            - readme.txt
+            - .wordpress-org/**
 jobs:
     trunk:
         name: Push to trunk
