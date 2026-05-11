@@ -3,7 +3,7 @@
  * Plugin Name: WP Author Slug
  * Plugin URI:  http://en.wp.obenland.it/wp-author-slug/?utm_source=wordpress&utm_medium=plugin&utm_campaign=wp-author-slug
  * Description: Rewrites the author url to NOT display the username but the display name
- * Version:     5
+ * Version:     6
  * Author:      Konstantin Obenland
  * Author URI:  http://en.wp.obenland.it/?utm_source=wordpress&utm_medium=plugin&utm_campaign=wp-author-slug
  * Text Domain: wp-author-slug
