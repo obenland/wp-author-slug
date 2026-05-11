@@ -109,6 +109,39 @@ jobs:
             - name: Run PHP unit tests (multisite) against latest WordPress
               run: npm run test-php-multisite
 
+    notify-failure:
+        name: Open issue when validation fails
+        needs: [check, validate]
+        if: always() && needs.validate.result == 'failure'
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+        steps:
+            - name: Open issue (deduped by title)
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  VERSION: ${{ needs.check.outputs.version }}
+                  FULL: ${{ needs.check.outputs.full }}
+                  RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+              run: |
+                  set -euo pipefail
+                  title="Validate failed against WordPress $VERSION"
+                  # Skip if an open issue already tracks this version's failure,
+                  # so daily retries don't spam.
+                  existing=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+                  if [ -n "$existing" ]; then
+                      echo "Issue #$existing already tracks this failure; skipping."
+                      exit 0
+                  fi
+                  gh issue create \
+                      --title "$title" \
+                      --body "PHPUnit validation against WordPress \`$FULL\` failed during the scheduled \`Update Tested up to\` run.
+
+                  Run: $RUN_URL
+
+                  Daily runs will keep retrying until this issue is closed. Close it once the plugin is patched or wp.org ships an update."
+
     update:
         needs: [check, validate]
         if: needs.check.outputs.needs_update == 'true'
