@@ -121,6 +121,7 @@ jobs:
               shell: bash
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GH_REPO: ${{ github.repository }}
                   VERSION: ${{ needs.check.outputs.version }}
                   FULL: ${{ needs.check.outputs.full }}
                   RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -157,6 +158,7 @@ jobs:
               shell: bash
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GH_REPO: ${{ github.repository }}
                   VERSION: ${{ needs.check.outputs.version }}
                   FULL: ${{ needs.check.outputs.full }}
               # Only auto-closes the issue for this exact version. If 6.5 failed
