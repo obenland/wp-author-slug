@@ -2,23 +2,77 @@ name: Update Tested up to
 
 on:
     schedule:
-        - cron: '0 9 * * 1'
+        - cron: '0 9 * * *'
     workflow_dispatch:
 
 permissions:
-    contents: write
-    pull-requests: write
+    # GITHUB_TOKEN only needs to read the repo here — PR creation and merge
+    # both use WORKFLOW_PAT, so no contents:write or pull-requests:write
+    # surface area on the default token.
+    contents: read
 
 concurrency:
     group: update-tested-up-to
     cancel-in-progress: false
 
 jobs:
+    check:
+        name: Check for new WordPress version
+        # Pin scheduled runs to trunk, but allow manual dispatch from any branch
+        # for testing.
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/trunk'
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        outputs:
+            needs_update: ${{ steps.check.outputs.needs_update }}
+            version: ${{ steps.check.outputs.version }}
+            full: ${{ steps.check.outputs.full }}
+            previous: ${{ steps.check.outputs.previous }}
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  sparse-checkout: readme.txt
+                  sparse-checkout-cone-mode: false
+
+            - name: Compare latest WordPress against readme
+              id: check
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  latest=$(curl -fsSL --connect-timeout 30 --max-time 60 --retry 3 --retry-delay 2 https://api.wordpress.org/core/version-check/1.7/ | jq -r '.offers[0].version')
+                  if ! [[ "$latest" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+                      echo "Unexpected WordPress version: '$latest'" >&2
+                      exit 1
+                  fi
+                  short=$(echo "$latest" | awk -F. '{print $1"."$2}')
+                  if ! [[ "$short" =~ ^[0-9]+\.[0-9]+$ ]]; then
+                      echo "Failed to derive major.minor from '$latest'" >&2
+                      exit 1
+                  fi
+                  current=$(sed -nE '/^[Tt]ested up to:/{s/^[Tt]ested up to:[[:space:]]+//;s/\r$//;p;q;}' readme.txt)
+                  if [ -z "$current" ]; then
+                      echo "Could not find 'Tested up to:' header in readme.txt" >&2
+                      exit 1
+                  fi
+                  sorted=$(printf '%s\n%s\n' "$current" "$short" | sort -V)
+                  older="${sorted%%$'\n'*}"
+                  if [ "$current" = "$short" ] || [ "$older" != "$current" ]; then
+                      echo "Current ($current) is at or ahead of target ($short); nothing to do."
+                      echo "needs_update=false" >> "$GITHUB_OUTPUT"
+                      exit 0
+                  fi
+                  {
+                      echo "needs_update=true"
+                      echo "version=$short"
+                      echo "full=$latest"
+                      echo "previous=$current"
+                  } >> "$GITHUB_OUTPUT"
+                  echo "Bump needed: $current -> $short (WP $latest)"
+
     validate:
         name: Validate against latest WordPress
-        if: github.ref == 'refs/heads/trunk'
-        permissions:
-            contents: read
+        needs: check
+        if: needs.check.outputs.needs_update == 'true'
         runs-on: ubuntu-latest
         timeout-minutes: 30
         env:
@@ -55,84 +109,118 @@ jobs:
             - name: Run PHP unit tests (multisite) against latest WordPress
               run: npm run test-php-multisite
 
+    notify-failure:
+        name: Open issue when validation fails
+        needs: [check, validate]
+        if: always() && needs.validate.result == 'failure'
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+        steps:
+            - name: Open issue (deduped by title)
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GH_REPO: ${{ github.repository }}
+                  VERSION: ${{ needs.check.outputs.version }}
+                  FULL: ${{ needs.check.outputs.full }}
+                  RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+              run: |
+                  set -euo pipefail
+                  title="Validate failed against WordPress $VERSION"
+                  # Skip if an open issue already tracks this version's failure,
+                  # so daily retries don't spam.
+                  existing=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+                  if [ -n "$existing" ]; then
+                      echo "Issue #$existing already tracks this failure; skipping."
+                      exit 0
+                  fi
+                  gh issue create \
+                      --title "$title" \
+                      --body "$(cat <<EOF
+                  PHPUnit validation against WordPress \`$FULL\` failed during the scheduled \`Update Tested up to\` run.
+
+                  Run: $RUN_URL
+
+                  Daily runs will keep retrying until this issue is closed. Close it once the plugin is patched or wp.org ships an update.
+                  EOF
+                  )"
+
+    close-failure-issue:
+        name: Close validation-failure issue on success
+        needs: [check, validate]
+        if: needs.validate.result == 'success'
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+        steps:
+            - name: Close any open failure issue for this version
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GH_REPO: ${{ github.repository }}
+                  VERSION: ${{ needs.check.outputs.version }}
+                  FULL: ${{ needs.check.outputs.full }}
+              # Only auto-closes the issue for this exact version. If 6.5 failed
+              # and we now validate green against 6.6, the 6.5 issue stays open
+              # for human review — that failure was real and worth investigating
+              # even after a later release unsticks the workflow.
+              run: |
+                  set -euo pipefail
+                  title="Validate failed against WordPress $VERSION"
+                  existing=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+                  if [ -z "$existing" ]; then
+                      echo "No matching open issue to close."
+                      exit 0
+                  fi
+                  gh issue close "$existing" \
+                      --comment "Validation passed against WordPress \`$FULL\`. Closing automatically."
+
     update:
-        needs: validate
-        if: github.ref == 'refs/heads/trunk'
+        needs: [check, validate]
+        if: needs.check.outputs.needs_update == 'true'
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
 
-            - name: Get latest WordPress version
-              id: wp
-              shell: bash
-              run: |
-                  set -euo pipefail
-                  latest=$(curl -fsSL --connect-timeout 30 --max-time 60 --retry 3 --retry-delay 2 https://api.wordpress.org/core/version-check/1.7/ | jq -r '.offers[0].version')
-                  if ! [[ "$latest" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-                      echo "Unexpected WordPress version: '$latest'" >&2
-                      exit 1
-                  fi
-                  short=$(echo "$latest" | awk -F. '{print $1"."$2}')
-                  if ! [[ "$short" =~ ^[0-9]+\.[0-9]+$ ]]; then
-                      echo "Failed to derive major.minor from '$latest'" >&2
-                      exit 1
-                  fi
-                  {
-                      echo "version=$short"
-                      echo "full=$latest"
-                  } >> "$GITHUB_OUTPUT"
-                  echo "Latest WordPress: $latest (major.minor: $short)"
-
             - name: Update readme.txt
-              id: update
               shell: bash
+              env:
+                  TARGET: ${{ needs.check.outputs.version }}
+                  PREVIOUS: ${{ needs.check.outputs.previous }}
               run: |
                   set -euo pipefail
-                  target='${{ steps.wp.outputs.version }}'
-                  current=$(sed -nE '/^[Tt]ested up to:/{s/^[Tt]ested up to:[[:space:]]+//;s/\r$//;p;q;}' readme.txt)
-                  if [ -z "$current" ]; then
-                      echo "Could not find 'Tested up to:' header in readme.txt" >&2
-                      exit 1
-                  fi
-                  sorted=$(printf '%s\n%s\n' "$current" "$target" | sort -V)
-                  older="${sorted%%$'\n'*}"
-                  if [ "$current" = "$target" ] || [ "$older" != "$current" ]; then
-                      echo "Current ($current) is at or ahead of target ($target); nothing to do."
-                      echo "updated=false" >> "$GITHUB_OUTPUT"
-                      exit 0
-                  fi
-                  sed -i -E "s/^([Tt]ested up to:[[:space:]]+).*/\1$target/" readme.txt
+                  sed -i -E "s/^([Tt]ested up to:[[:space:]]+).*/\1$TARGET/" readme.txt
                   new=$(sed -nE '/^[Tt]ested up to:/{s/^[Tt]ested up to:[[:space:]]+//;s/\r$//;p;q;}' readme.txt)
-                  if [ "$new" != "$target" ]; then
+                  if [ "$new" != "$TARGET" ]; then
                       echo "sed did not produce expected value (got '$new')" >&2
                       exit 1
                   fi
-                  {
-                      echo "updated=true"
-                      echo "previous=$current"
-                  } >> "$GITHUB_OUTPUT"
-                  echo "Bumped Tested up to: $current -> $target"
+                  echo "Bumped Tested up to: $PREVIOUS -> $TARGET"
 
             - name: Create Pull Request
-              if: steps.update.outputs.updated == 'true'
               id: pr
               uses: peter-evans/create-pull-request@v8
               with:
+                  # PAT (not GITHUB_TOKEN) so the bot's branch push triggers PR CI,
+                  # and so the eventual --auto squash-merge is attributed to a real
+                  # identity and triggers push-asset-readme-update.yml on trunk.
+                  token: ${{ secrets.WORKFLOW_PAT }}
                   base: trunk
-                  commit-message: 'Bump Tested up to ${{ steps.wp.outputs.version }}'
-                  title: 'Bump Tested up to ${{ steps.wp.outputs.version }}'
+                  commit-message: 'Bump Tested up to ${{ needs.check.outputs.version }}'
+                  title: 'Bump Tested up to ${{ needs.check.outputs.version }}'
                   body: |
-                      WordPress ${{ steps.wp.outputs.full }} is the latest stable release.
+                      WordPress ${{ needs.check.outputs.full }} is the latest stable release.
 
-                      Bumps `Tested up to` in readme.txt from ${{ steps.update.outputs.previous }} to ${{ steps.wp.outputs.version }} (major.minor of ${{ steps.wp.outputs.full }}).
-                  branch: chore/tested-up-to-${{ steps.wp.outputs.version }}
+                      Bumps `Tested up to` in readme.txt from ${{ needs.check.outputs.previous }} to ${{ needs.check.outputs.version }} (major.minor of ${{ needs.check.outputs.full }}).
+                  branch: chore/tested-up-to-${{ needs.check.outputs.version }}
                   delete-branch: true
 
             - name: Merge PR
               if: steps.pr.outputs.pull-request-number
               shell: bash
               env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GH_TOKEN: ${{ secrets.WORKFLOW_PAT }}
                   PR: ${{ steps.pr.outputs.pull-request-number }}
               run: |
                   set -euo pipefail
@@ -157,8 +245,8 @@ jobs:
                           exit 1
                           ;;
                   esac
-                  # Poll until the merge actually completes, so the SVN sync below cannot
-                  # publish ahead of trunk when --auto was used.
+                  # Poll until the merge actually completes so the workflow accurately
+                  # reflects success/failure when --auto was used.
                   for _ in $(seq 1 60); do
                       merged_at=$(gh pr view "$PR" --json mergedAt --jq '.mergedAt')
                       if [ "$merged_at" != "null" ] && [ -n "$merged_at" ]; then
@@ -169,23 +257,3 @@ jobs:
                   done
                   echo "PR #$PR did not merge within 10 minutes" >&2
                   exit 1
-
-            - name: Refresh workspace from merged trunk
-              if: success() && steps.pr.outputs.pull-request-number
-              shell: bash
-              run: |
-                  set -euo pipefail
-                  # peter-evans/create-pull-request leaves the working tree at the pre-PR
-                  # state, and the merge happens on the remote. Pull the post-merge trunk
-                  # so the SVN sync below copies the actually-bumped readme.txt rather than
-                  # the workspace's stale copy.
-                  git fetch origin trunk
-                  git reset --hard origin/trunk
-
-            - name: Sync readme to WordPress.org SVN
-              if: success() && steps.pr.outputs.pull-request-number
-              uses: 10up/action-wordpress-plugin-asset-update@stable
-              env:
-                  SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
-                  SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
-                  IGNORE_OTHER_FILES: true
