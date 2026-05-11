@@ -142,6 +142,31 @@ jobs:
 
                   Daily runs will keep retrying until this issue is closed. Close it once the plugin is patched or wp.org ships an update."
 
+    close-failure-issue:
+        name: Close validation-failure issue on success
+        needs: [check, validate]
+        if: needs.validate.result == 'success'
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+        steps:
+            - name: Close any open failure issue for this version
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  VERSION: ${{ needs.check.outputs.version }}
+                  FULL: ${{ needs.check.outputs.full }}
+              run: |
+                  set -euo pipefail
+                  title="Validate failed against WordPress $VERSION"
+                  existing=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+                  if [ -z "$existing" ]; then
+                      echo "No matching open issue to close."
+                      exit 0
+                  fi
+                  gh issue close "$existing" \
+                      --comment "Validation passed against WordPress \`$FULL\`. Closing automatically."
+
     update:
         needs: [check, validate]
         if: needs.check.outputs.needs_update == 'true'
