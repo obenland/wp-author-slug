@@ -6,8 +6,10 @@ on:
     workflow_dispatch:
 
 permissions:
-    contents: write
-    pull-requests: write
+    # GITHUB_TOKEN only needs to read the repo here — PR creation and merge
+    # both use WORKFLOW_PAT, so no contents:write or pull-requests:write
+    # surface area on the default token.
+    contents: read
 
 concurrency:
     group: update-tested-up-to
@@ -16,9 +18,9 @@ concurrency:
 jobs:
     check:
         name: Check for new WordPress version
-        if: github.ref == 'refs/heads/trunk'
-        permissions:
-            contents: read
+        # Pin scheduled runs to trunk, but allow manual dispatch from any branch
+        # for testing.
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/trunk'
         runs-on: ubuntu-latest
         timeout-minutes: 5
         outputs:
@@ -71,8 +73,6 @@ jobs:
         name: Validate against latest WordPress
         needs: check
         if: needs.check.outputs.needs_update == 'true'
-        permissions:
-            contents: read
         runs-on: ubuntu-latest
         timeout-minutes: 30
         env:
