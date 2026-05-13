@@ -10,7 +10,7 @@ on:
         # push, trunk has unshipped code from a prior commit — cut a release tag
         # to publish via deploy.yml instead.
         paths:
-            - readme.txt
+            - README.md
             - .wordpress-org/**
 jobs:
     trunk:

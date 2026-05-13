@@ -1,4 +1,4 @@
-=== WP Author Slug ===
+# WP Author Slug
 Contributors: obenland
 Tags: security, slug, author, author archive, url, permalink
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=XVPLJZ3VH4GCN
@@ -8,7 +8,7 @@ Stable tag: 6
 
 Add a layer of security and prevent your login name from being shown in the author archive's URL.
 
-== Description ==
+## Description
 
 This plugin replaces the author slug with a sanitized version of the user's display name.
 
@@ -18,61 +18,61 @@ in the author archive's URL, which works towards your friendly URLs with using y
 DO NOT use this on a site with more than 1000 registered users, as updating all of their nicenames at once might break your site.
 
 
-== Installation ==
+## Installation
 
 1. Download WP Author Slug.
 2. Unzip the folder into the `/wp-content/plugins/` directory.
 3. Activate the plugin through the 'Plugins' menu in WordPress.
 
 
-== Changelog ==
+## Changelog
 
-= 6 =
+### 6
 * Escaped donate link output in `plugin_row_meta` to harden against malformed URLs.
 * Tested with WordPress 6.9.
 
-= 5 =
+### 5
 * Added conflict detection for author slugs that match existing page slugs. Props @knutsp.
 * Tested with WordPress 6.8.
 
-= 4 =
+### 4
 * Moved clean up to plugin deactivation. This makes sure author slugs are only modified with the plugin active.
 * Updated utility class.
 * Tested with WordPress 6.1.
 
-= 3 =
+### 3
 * Maintenance release.
 * Checks if keys and properties exist before using them.
 * Tested with WordPress 5.6.
 
-= 2 =
+### 2
 * Maintenance release.
 * Updated code to adhere to WordPress Coding Standards.
 * Tested with WordPress 5.0.
 
-= 1.3.0 =
+### 1.3.0
 * Maintenance release.
 * Tested with WordPress 4.0.
 
-= 1.2.2 =
+### 1.2.2
 * Updated utility class.
 * Tested with WordPress 3.4.1.
 
-= 1.2.1 =
+### 1.2.1
 * Updated uninstall.php and activation hook to use WordPress User API instead of custom queries.
 * Updated utility class.
 
-= 1.2 =
+### 1.2
 * Tested for WordPress 3.3.1.
 
-= 1.1 =
+### 1.1
 * Tested for WordPress 3.1.1.
 * Added complete uninstall routine.
 * Added compatibility for pre-3.1 multisite installs.
 
-= 1.0 =
+### 1.0
 * Initial Release.
 
 
-== Upgrade Notice ==
+## Upgrade Notice
 Hardened donate link escaping in the plugin row meta. Tested with WordPress 6.9.
