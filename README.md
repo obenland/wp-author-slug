@@ -1,10 +1,12 @@
 # WP Author Slug
 Contributors: obenland
-Tags: security, slug, author, author archive, url, permalink
+Tags: security, slug, author, author archive, url
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=XVPLJZ3VH4GCN
 Requires at least: 3.0
 Tested up to: 6.9
 Stable tag: 6
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Add a layer of security and prevent your login name from being shown in the author archive's URL.
 
