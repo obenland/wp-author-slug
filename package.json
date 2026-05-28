@@ -16,10 +16,13 @@
 		"wp-env": "wp-env",
 		"format": "wp-scripts format",
 		"start": "wp-env start",
+		"start:tests": "wp-env start --config .wp-env.tests.json",
 		"stop": "wp-env stop",
+		"stop:tests": "wp-env stop --config .wp-env.tests.json",
 		"destroy": "wp-env destroy",
+		"destroy:tests": "wp-env destroy --config .wp-env.tests.json",
 		"test": "npm run test-php",
-		"test-php": "wp-env run tests-cli --env-cwd=/var/www/html/wp-content/plugins/wp-author-slug composer test",
-		"test-php-multisite": "wp-env run tests-cli --env-cwd=/var/www/html/wp-content/plugins/wp-author-slug composer test-multisite"
+		"test-php": "wp-env run cli --config .wp-env.tests.json --env-cwd=/var/www/html/wp-content/plugins/wp-author-slug composer test",
+		"test-php-multisite": "wp-env run cli --config .wp-env.tests.json --env-cwd=/var/www/html/wp-content/plugins/wp-author-slug composer test-multisite"
 	}
 }
