@@ -5,7 +5,7 @@
 	"description": "Rewrites the author URL to use the user's display name instead of their username.",
 	"devDependencies": {
 		"@wordpress/env": "^11.8.1",
-		"@wordpress/scripts": "^32.4.0"
+		"@wordpress/scripts": "^32.4.1"
 	},
 	"overrides": {
 		"minimatch@>=3 <3.1.5": "^3.1.5",
